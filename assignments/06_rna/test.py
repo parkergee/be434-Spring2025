@@ -59,7 +59,7 @@ def test_good_input1() -> None:
         if os.path.isdir(out_dir):
             shutil.rmtree(out_dir)
 
-        retval, out = getstatusoutput(f'{PRG} {INPUT1}')
+        retval, out = getstatusoutput(f'{PRG} -o {out_dir} {INPUT1}')
         assert retval == 0
         assert out == 'Done, wrote 1 sequence in 1 file to directory "out".'
         assert os.path.isdir(out_dir)

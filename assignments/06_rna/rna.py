@@ -6,6 +6,8 @@ Purpose: test
 """
 
 import argparse
+import os
+import sys
 
 
 # --------------------------------------------------
@@ -16,56 +18,56 @@ def get_args():
         description='test',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('positional',
-                        metavar='str',
-                        help='A positional argument')
-
-    parser.add_argument('-a',
-                        '--arg',
-                        help='A named string argument',
-                        metavar='str',
-                        type=str,
-                        default='')
-
-    parser.add_argument('-i',
-                        '--int',
-                        help='A named integer argument',
-                        metavar='int',
-                        type=int,
-                        default=0)
-
-    parser.add_argument('-f',
-                        '--file',
-                        help='A readable file',
+    parser.add_argument(#'-s',
+                        #'--sequence',
+                        'file',
+                        help='Input sequence file',
                         metavar='FILE',
+                        nargs='+', #how to do without args
                         type=argparse.FileType('rt'),
-                        default=None)
+                        default= [sys.stdin]
+                        )
 
     parser.add_argument('-o',
-                        '--on',
-                        help='A boolean flag',
-                        action='store_true')
+                        '--out_dir',
+                        help='Output directory',
+                        metavar= 'str',
+                        type=str, 
+                        default='')
+
 
     return parser.parse_args()
 
-
 # --------------------------------------------------
 def main():
-    """Make a jazz noise here"""
-
+    """Transcribe DNA into RNA for mult file."""
+    num_seq = 0
+    num_files = 0
     args = get_args()
-    str_arg = args.arg
-    int_arg = args.int
-    file_arg = args.file
-    flag_arg = args.on
-    pos_arg = args.positional
-
-    print(f'str_arg = "{str_arg}"')
-    print(f'int_arg = "{int_arg}"')
-    print('file_arg = "{}"'.format(file_arg.name if file_arg else ''))
-    print(f'flag_arg = "{flag_arg}"')
-    print(f'positional = "{pos_arg}"')
-
+    directory = args.out_dir
+    try:
+        os.mkdir(directory)
+        #print(f"Directory '{directory}' created successfully.")
+    except FileExistsError:
+        print(f"Directory '{directory}' already exists.")
+    sys.stdout
+    #dna = args.file.read().strip().upper()
+    f = args.file
+    
+    for fh in f:
+        name = os.path.basename(fh.name)
+        out_fh = open(directory+'/'+name, 'wt') if args.out_dir else sys.stdout
+        num_files += 1
+        for line in fh:
+            dna = line.strip().upper()
+            if dna: #if not empty
+                num_seq += 1
+                out_fh.write(dna.replace('T', 'U')+'\n')
+                #print(dna.replace('T', 'U'))
+        out_fh.close()
+    plural = 'file' if num_files == 1 else 'files'
+    pluralseq = 'sequence' if num_seq == 1 else 'sequences'
+    print(f'Done, wrote {num_seq} {pluralseq} in {num_files} {plural} to directory "{args.out_dir}".')
 
 # --------------------------------------------------
 if __name__ == '__main__':

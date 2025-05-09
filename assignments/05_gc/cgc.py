@@ -6,6 +6,9 @@ Purpose: count gc
 """
 
 import argparse
+import sys
+import os
+from operator import itemgetter
 
 
 # --------------------------------------------------
@@ -16,35 +19,18 @@ def get_args():
         description='count gc',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('positional',
-                        metavar='str',
-                        help='A positional argument')
-
-    parser.add_argument('-a',
-                        '--arg',
-                        help='A named string argument',
-                        metavar='str',
-                        type=str,
-                        default='')
-
-    parser.add_argument('-i',
-                        '--int',
-                        help='A named integer argument',
-                        metavar='int',
-                        type=int,
-                        default=0)
-
-    parser.add_argument('-f',
-                        '--file',
-                        help='A readable file',
+    parser.add_argument(#'-s',
+                        #'--sequence',
+                        'sequence',
+                        help='Input sequence file',
                         metavar='FILE',
+                        nargs='*', #how to do without args
                         type=argparse.FileType('rt'),
-                        default=None)
+                        default= [sys.stdin]
+                        )
 
-    parser.add_argument('-o',
-                        '--on',
-                        help='A boolean flag',
-                        action='store_true')
+    args = parser.parse_args()
+
 
     return parser.parse_args()
 
@@ -54,18 +40,42 @@ def main():
     """Make a jazz noise here"""
 
     args = get_args()
-    str_arg = args.arg
-    int_arg = args.int
-    file_arg = args.file
-    flag_arg = args.on
-    pos_arg = args.positional
-
-    print(f'str_arg = "{str_arg}"')
-    print(f'int_arg = "{int_arg}"')
-    print('file_arg = "{}"'.format(file_arg.name if file_arg else ''))
-    print(f'flag_arg = "{flag_arg}"')
-    print(f'positional = "{pos_arg}"')
-
+    gc = 0
+    at = 0
+    unknown = 0
+    results = []
+    seq_id = ''
+    total = 0
+    seq = args.sequence
+    for fh in seq:
+        for line in fh:
+            if line.startswith('>'):
+                if(total) > 0:
+                    percentage = (gc)/(total)*100
+                    result = percentage
+                    #print(seq_id,result)
+                    results.append((seq_id, result))
+                    gc = at = unknown = total = 0
+                seq_id = line.strip()[1:]
+            else:
+                nuc_str = list(line.strip().upper())
+                for n in nuc_str:
+                    total += 1
+                    if n == 'G' or n == 'C' :
+                        gc += 1
+                    elif n == 'A' or n == 'T':
+                        at += 1
+                    else:
+                        unknown += 1
+        result = (gc)/(total)*100
+        results.append((seq_id, result))
+        #print(results)
+        final = ('',-1)
+        for result in results:
+            if result[1] > final[1]:
+                final = result
+            #print(result[1], final[1])
+        print("{} {:.6f}".format(*final))
 
 # --------------------------------------------------
 if __name__ == '__main__':
